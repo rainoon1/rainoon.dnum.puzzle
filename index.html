@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>数字拼图游戏</title>
+    <style>
+        :root {
+            --scale-factor: 1.3; /* 整体缩放系数 */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #2c3e50;
+            color: #ecf0f1;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: calc(20px * var(--scale-factor));
+            box-sizing: border-box;
+            transform: scale(var(--scale-factor));
+            transform-origin: center top;
+        }
+
+        h1 {
+            color: #1abc9c;
+            margin-bottom: calc(30px * var(--scale-factor));
+            font-size: calc(2em * var(--scale-factor));
+            text-shadow: 0 calc(2px * var(--scale-factor)) calc(3px * var(--scale-factor)) rgba(0,0,0,0.3);
+        }
+
+        .main-container {
+            display: flex;
+            gap: calc(40px * var(--scale-factor));
+            margin-top: calc(20px * var(--scale-factor));
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .game-container {
+            background: rgba(52, 73, 94, 0.9);
+            padding: calc(25px * var(--scale-factor));
+            border-radius: calc(15px * var(--scale-factor));
+            box-shadow: 0 0 calc(20px * var(--scale-factor)) rgba(0,0,0,0.3);
+            width: calc(420px * var(--scale-factor));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .mode-selector {
+            width: 100%;
+            text-align: center;
+            margin-bottom: calc(15px * var(--scale-factor));
+        }
+
+        .button-group {
+            display: flex;
+            gap: calc(10px * var(--scale-factor));
+            margin-bottom: calc(20px * var(--scale-factor));
+            width: 100%;
+            justify-content: center;
+        }
+
+        .grid {
+            display: grid;
+            gap: calc(5px * var(--scale-factor));
+            background: #34495e;
+            padding: calc(10px * var(--scale-factor));
+            border-radius: calc(10px * var(--scale-factor));
+            margin-bottom: calc(20px * var(--scale-factor));
+        }
+
+        .cell {
+            width: calc(80px * var(--scale-factor));
+            height: calc(80px * var(--scale-factor));
+            background: #3498db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: calc(24px * var(--scale-factor));
+            cursor: pointer;
+            border-radius: calc(6px * var(--scale-factor));
+            transition: all 0.3s;
+            user-select: none;
+        }
+
+        .cell.empty {
+            background: transparent;
+            cursor: not-allowed;
+            visibility: visible !important;
+        }
+
+        .cell:not(.empty):hover {
+            background: #1abc9c;
+            transform: scale(1.05);
+        }
+
+        select, button {
+            padding: calc(12px * var(--scale-factor)) calc(24px * var(--scale-factor));
+            border: none;
+            border-radius: calc(6px * var(--scale-factor));
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: calc(16px * var(--scale-factor));
+            min-width: calc(120px * var(--scale-factor));
+        }
+
+        select {
+            background: #34495e;
+            color: white;
+            width: calc(200px * var(--scale-factor));
+        }
+
+        button {
+            background: #27ae60;
+            color: white;
+        }
+
+        button:hover {
+            background: #219a52;
+            transform: translateY(calc(-2px * var(--scale-factor)));
+        }
+
+        .step-counter {
+            text-align: center;
+            font-size: calc(18px * var(--scale-factor));
+            width: 100%;
+        }
+
+        .records {
+            background: rgba(52, 73, 94, 0.9);
+            padding: calc(25px * var(--scale-factor));
+            border-radius: calc(15px * var(--scale-factor));
+            min-width: calc(250px * var(--scale-factor));
+            box-shadow: 0 0 calc(20px * var(--scale-factor)) rgba(0,0,0,0.3);
+        }
+
+        .records h3 {
+            margin: 0 0 calc(15px * var(--scale-factor)) 0;
+            font-size: calc(18px * var(--scale-factor));
+            text-align: center;
+        }
+
+        .record-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .record-item {
+            padding: calc(10px * var(--scale-factor));
+            margin: calc(8px * var(--scale-factor)) 0;
+            background: #2c3e50;
+            border-radius: calc(6px * var(--scale-factor));
+            display: flex;
+            justify-content: space-between;
+            font-size: calc(14px * var(--scale-factor));
+        }
+
+        @media (max-width: 480px) {
+            :root {
+                --scale-factor: 1;
+            }
+            
+            body {
+                padding: 20px;
+                transform: none;
+            }
+            
+            .game-container {
+                width: 100%;
+                padding: 15px;
+            }
+            
+            select {
+                width: 100%;
+                max-width: 200px;
+            }
+            
+            .button-group {
+                flex-wrap: wrap;
+            }
+            
+            button {
+                flex: 1;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>数字拼图游戏</h1>
+    <div class="main-container">
+        <div class="game-container">
+            <div class="mode-selector">
+                <select id="sizeSelect">
+                    <option value="3">3x3</option>
+                    <option value="4">4x4</option>
+                    <option value="5">5x5</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="startGame()">开始游戏</button>
+                <button onclick="resetGame()">重新开始</button>
+            </div>
+
+            <div class="grid" id="grid"></div>
+            <div class="step-counter">步数: <span id="steps">0</span></div>
+        </div>
+
+        <div class="records">
+            <h3>🏆 最快记录</h3>
+            <ul class="record-list" id="recordList"></ul>
+        </div>
+    </div>
+
+    <script>
+        let currentSize = 3;
+        let grid = [];
+        let emptyPos = {x: 0, y: 0};
+        let steps = 0;
+        let records = JSON.parse(localStorage.getItem('puzzleRecords')) || {};
+
+        function initGrid(size) {
+            currentSize = size;
+            const container = document.getElementById('grid');
+            const scale = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--scale-factor')) || 1;
+            const cellSize = 80 * scale;
+            container.style.gridTemplateColumns = `repeat(${size}, ${cellSize}px)`;
+            
+            grid = [];
+            for(let y = 0; y < size; y++) {
+                let row = [];
+                for(let x = 0; x < size; x++) {
+                    row.push(y * size + x + 1);
+                }
+                grid.push(row);
+            }
+            grid[size-1][size-1] = 0;
+            emptyPos = {x: size-1, y: size-1};
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('grid');
+            container.innerHTML = '';
+            
+            for(let y = 0; y < currentSize; y++) {
+                for(let x = 0; x < currentSize; x++) {
+                    const num = grid[y][x];
+                    const cell = document.createElement('div');
+                    cell.className = num === 0 ? 'cell empty' : 'cell';
+                    cell.textContent = num || '';
+                    cell.onclick = () => moveTile(x, y);
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        function shuffleGrid() {
+            const directions = ['up', 'down', 'left', 'right'];
+            const shuffleMoves = currentSize ** 3 * 10;
+            
+            for(let i = 0; i < shuffleMoves; i++) {
+                const validDirs = [];
+                if(emptyPos.x > 0) validDirs.push('right');
+                if(emptyPos.x < currentSize-1) validDirs.push('left');
+                if(emptyPos.y > 0) validDirs.push('down');
+                if(emptyPos.y < currentSize-1) validDirs.push('up');
+
+                const dir = validDirs[Math.floor(Math.random() * validDirs.length)];
+                simulateMove(dir);
+            }
+            steps = 0;
+            document.getElementById('steps').textContent = steps;
+        }
+
+        function simulateMove(dir) {
+            let targetX = emptyPos.x;
+            let targetY = emptyPos.y;
+            
+            switch(dir) {
+                case 'left': targetX++; break;
+                case 'right': targetX--; break;
+                case 'up': targetY++; break;
+                case 'down': targetY--; break;
+            }
+            
+            grid[emptyPos.y][emptyPos.x] = grid[targetY][targetX];
+            grid[targetY][targetX] = 0;
+            emptyPos = {x: targetX, y: targetY};
+        }
+
+        function moveTile(x, y) {
+            if(Math.abs(x - emptyPos.x) + Math.abs(y - emptyPos.y) !== 1) return;
+            
+            grid[emptyPos.y][emptyPos.x] = grid[y][x];
+            grid[y][x] = 0;
+            emptyPos = {x, y};
+            
+            steps++;
+            document.getElementById('steps').textContent = steps;
+            
+            if(checkWin()) {
+                setTimeout(() => alert('🎉 你成功了！'), 50);
+                saveRecord();
+                updateRecords();
+            }
+            renderGrid();
+        }
+
+        function checkWin() {
+            for(let y = 0; y < currentSize; y++) {
+                for(let x = 0; x < currentSize; x++) {
+                    const expected = (y === currentSize-1 && x === currentSize-1) ? 0 : y * currentSize + x + 1;
+                    if(grid[y][x] !== expected) return false;
+                }
+            }
+            return true;
+        }
+
+        function saveRecord() {
+            const mode = `${currentSize}x${currentSize}`;
+            if(!records[mode]) records[mode] = [];
+            
+            records[mode].push({
+                steps: steps,
+                timestamp: Date.now()
+            });
+            
+            if(records[mode].length > 500) records[mode].shift();
+            localStorage.setItem('puzzleRecords', JSON.stringify(records));
+        }
+
+        function updateRecords() {
+            const list = document.getElementById('recordList');
+            list.innerHTML = '';
+            
+            const mode = `${currentSize}x${currentSize}`;
+            if(!records[mode] || records[mode].length === 0) {
+                list.innerHTML = '<div style="text-align:center">暂无记录</div>';
+                return;
+            }
+            
+            const top10 = records[mode]
+                .slice()
+                .sort((a, b) => a.steps - b.steps)
+                .slice(0, 10);
+            
+            top10.forEach((record, index) => {
+                const li = document.createElement('li');
+                li.className = 'record-item';
+                li.innerHTML = `
+                    <span>${index+1}.</span>
+                    <span>${record.steps}步</span>
+                    <span>${new Date(record.timestamp).toLocaleDateString()}</span>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        function startGame() {
+            const size = parseInt(document.getElementById('sizeSelect').value);
+            initGrid(size);
+            shuffleGrid();
+            renderGrid();
+            updateRecords();
+        }
+
+        function resetGame() {
+            initGrid(currentSize);
+            shuffleGrid();
+            renderGrid();
+            steps = 0;
+            document.getElementById('steps').textContent = steps;
+        }
+
+        // 初始化游戏
+        startGame();
+    </script>
+</body>
+</html>
